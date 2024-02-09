@@ -1,6 +1,9 @@
 
 ## Install
 
+Requirements:
+* Ubuntu 20.04 or 22.04
+
 Install linux requirements:
 
 ```bash
