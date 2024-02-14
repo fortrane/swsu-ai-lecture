@@ -129,6 +129,7 @@ def process_qa(file_data_id: int, db: Session = Depends(get_db)):
 
     # Обновляем запись в базе данных с результатом qa
     db_file_data.test = qa_text_corrected
+    db_file_data.test_raw = qa_text
     db.commit()
 
 

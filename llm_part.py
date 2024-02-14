@@ -111,7 +111,7 @@ def qa_generation(docs):
         chunk_size=1000, chunk_overlap=20
     )
     split_docs = text_splitter.split_documents(docs)
-    print('\n==============\n',split_docs, '\n=============\n')
+    print('\n==============\n', split_docs, '\n=============\n')
 
     print(map_reduce_chain.run(split_docs))
 

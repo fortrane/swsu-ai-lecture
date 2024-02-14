@@ -22,6 +22,7 @@ class FileDataBase(BaseModel):
     content: Optional[str] = None
     summary: Optional[str] = None
     test: Optional[str] = None
+    test_raw: Optional[str] = None
 
 
 class FileDataCreate(FileDataBase):
@@ -62,6 +63,7 @@ class FileDataDetail(BaseModel):
     content: Optional[str] = None
     summary: Optional[str] = None
     test: Optional[str] = None
+    test_raw: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
