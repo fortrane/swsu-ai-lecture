@@ -10,9 +10,8 @@ def generate_random_filename(original_filename):
 
 
 def correct_qa_format(raw_str):
-    formatted_str = raw_str.replace('[', '{').replace(']', '}').replace('\n', ', ')
-    json_str = f"[{formatted_str}]"
-    return transform_to_target_format(json_str)
+    formatted_str = raw_str.replace("\'", "\"")
+    return transform_to_target_format(formatted_str)
 
 
 def transform_to_target_format(json_str):
@@ -21,7 +20,7 @@ def transform_to_target_format(json_str):
     transformed_data = []
 
     for item in data:
-        question_data = {"answers": {}}
+        question_data = {'answers': {}}
 
         for key, value in item.items():
             # Ищем ключ вопроса

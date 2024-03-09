@@ -1,5 +1,7 @@
 from langchain_community.document_loaders import Docx2txtLoader, PyPDFLoader
-from langchain.text_splitter import TokenTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
+from langchain.docstore.document import Document
+
 
 def docx_loader(path):
     loader = Docx2txtLoader(path)
@@ -13,11 +15,19 @@ def pdf_loader(path):
     return pages
 
 
-def txt_splitter(doc):
-    text_splitter = TokenTextSplitter(chunk_size=10000, chunk_overlap=30)
-    page_data = doc[0]
-    texts = text_splitter.split_text(page_data.page_content)
-
+def text_splitter(text):
+    text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
+        separator='. ',
+        encoding_name='cl100k_base',
+        chunk_size=3500,
+        chunk_overlap=0
+    )
+    texts = text_splitter.split_text(text)
     return texts
 
 
+def pre_processing(data):
+    stroke = data[0].page_content.replace('\n', ' ')
+    new_stroke = stroke.replace('  ', ' ')
+
+    return new_stroke

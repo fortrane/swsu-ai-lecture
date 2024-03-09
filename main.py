@@ -23,20 +23,20 @@ def get_db():
         db.close()
 
 
-def summary(file_name):
+def summary(file_name, facts_num=10):
     if file_name.split('.')[1] == 'pdf':
-        return llm_part.summary(dl.pdf_loader(file_name))
+        return "Временно недоступно загружать документы формата PDF."
     elif file_name.split('.')[1] == 'docx':
-        return llm_part.summary(dl.docx_loader(file_name))
+        return llm_part.summary(dl.docx_loader(file_name), facts_num=7)
     else:
         return 'Файл неправильно назван(name.pdf) или имеет не верный формат pdf/docx'
 
 
 def qa(file_name):
     if file_name.split('.')[1] == 'pdf':
-        return llm_part.qa_json_bilder_PDF(llm_part.qa_generation(dl.pdf_loader(file_name)))
+        return "Временно недоступно загружать документы формата PDF."
     elif file_name.split('.')[1] in ['docx', 'doc']:
-        return llm_part.qa_json_bilder_DOCX(llm_part.qa_generation(dl.docx_loader(file_name)))
+        return llm_part.qa_generator(dl.docx_loader(file_name))
     else:
         return 'Файл неправильно назван(name.pdf) или имеет не верный формат pdf/docx'
 
@@ -126,6 +126,7 @@ def process_qa(file_data_id: int, db: Session = Depends(get_db)):
     # Вызываем функцию qa, передавая путь файла
     qa_text = qa(file_path)
     qa_text_corrected = utility_part.correct_qa_format(qa_text)
+    #qa_text_corrected = "Empty"
 
     # Обновляем запись в базе данных с результатом qa
     db_file_data.test = qa_text_corrected
