@@ -6,6 +6,7 @@ from api_getter import api_getter
 from prompts import QA_CREATOR, WRONG_A_GENERTOR, REGENERATOR_1, MAP_SUM, COMBINE_SUM
 from document_loaders import text_splitter, pre_processing
 import ast
+from fastapi import HTTPException
 
 
 def regenerator(chunk, first_output):
@@ -109,6 +110,11 @@ def qa_generator(document):
     for chunk in chunks:
         qa_chain = LLMChain(llm=llm, prompt=qa_creator_prompt)
         answers = qa_chain.invoke({"chunk": chunk})
+        if answers['text'].startswith(("Не люблю менять тему разговора",
+                                        "Что-то в вашем вопросе меня смущает",
+                                        "Как у нейросетевой языковой модели у меня не может быть настроения")):
+
+            return {"status_code": 401, "Blacklisted chunk": chunk}
 
         print(f"\nВходной чанк:\n{answers['chunk']}\nОтвет llm:\n{answers['text']}\n")
 
@@ -128,7 +134,7 @@ def qa_generator(document):
         print(f"Входной вопрос:\n{variant['question']}\nОтвет: {variant['answer']}\nОтвет llm:\n{variant['text']}\n")
         wa = string_to_sets_wa(variant['text'])
         wa_sets.append(wa)
-    print(f"Множество ответов:\n{wa_sets}")
+    print(f"Множество ответов:\n{wa_sets}\n\n")
 
     validated_test = wa_validation(qa_sets, wa_sets)
     print(validated_test)
@@ -140,6 +146,7 @@ def summary(document, facts_num):
     document_content = pre_processing(document)
     # Делим на чанки
     chunks = text_splitter(document_content)
+    print(chunks)
 
     token = api_getter()["access_token"]
     print(f'Новый токен:\n{token}')
@@ -147,12 +154,20 @@ def summary(document, facts_num):
 
     map_sum = MAP_SUM
     map_sum_prompt = PromptTemplate.from_template(map_sum)
-
     map_chain = LLMChain(llm=llm, prompt=map_sum_prompt)
+
     # Результат по чанкам
     map_sums_chunks = ""
     for chunk in chunks:
+        print("INPUT CHUNK:", chunk)
         sum_part = map_chain.invoke({"chunk": chunk})
+        print("OUTPUT RES:", sum_part)
+        if sum_part['text'].startswith(("Не люблю менять тему разговора",
+                                        "Что-то в вашем вопросе меня смущает",
+                                        "Как у нейросетевой языковой модели у меня не может быть настроения")):
+
+            return {"status_code": 401, "Blacklisted chunk": chunk}
+
         map_sums_chunks += f"{sum_part['text']}\n\n"
 
     print(map_sums_chunks)
@@ -162,3 +177,5 @@ def summary(document, facts_num):
     res = combine_chain.invoke({"map_sums": map_sums_chunks, "facts_num": facts_num})
 
     return res['text']
+
+

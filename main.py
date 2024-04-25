@@ -1,5 +1,4 @@
 import os
-
 import llm_part
 import document_loaders as dl
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException
@@ -104,6 +103,8 @@ def process_summary(file_data_id: int, db: Session = Depends(get_db)):
 
     # Вызываем функцию summary, передавая путь файла
     summary_text = summary(file_path)
+    if isinstance(summary_text, dict) and summary_text.get("status_code") == 401:
+        raise HTTPException(status_code=401, detail="Blacklisted chunk: " + str(summary_text.get("Blacklisted chunk")))
 
     # Обновляем запись в базе данных с результатом summary
     db_file_data.summary = summary_text
@@ -126,7 +127,9 @@ def process_qa(file_data_id: int, db: Session = Depends(get_db)):
     # Вызываем функцию qa, передавая путь файла
     qa_text = qa(file_path)
     qa_text_corrected = utility_part.correct_qa_format(qa_text)
-    #qa_text_corrected = "Empty"
+    if isinstance(qa_text, dict) and qa_text.get("status_code") == 401:
+        raise HTTPException(status_code=401, detail="Blacklisted chunk: " + str(qa_text.get("Blacklisted chunk")))
+    # qa_text_corrected = "Empty"
 
     # Обновляем запись в базе данных с результатом qa
     db_file_data.test = qa_text_corrected
