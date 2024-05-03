@@ -11,6 +11,8 @@ from sql_app.database import engine
 import docx2txt
 from PyPDF2 import PdfReader
 
+from fastapi.middleware.cors import CORSMiddleware
+
 models.Base.metadata.create_all(bind=engine)
 
 
@@ -42,6 +44,16 @@ def qa(file_name):
 
 # starting web application
 app = FastAPI()
+origins = [
+    "*",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/upload-file", response_model=schemas.FileResponse)
