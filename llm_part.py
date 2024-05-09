@@ -1,12 +1,19 @@
-# -*- coding: utf-8 -*-
 from langchain_community.chat_models import GigaChat
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from api_getter import api_getter
-from prompts import QA_CREATOR, WRONG_A_GENERTOR, REGENERATOR_1, MAP_SUM, COMBINE_SUM
-from document_loaders import text_splitter, pre_processing
+from prompts import (
+    QA_CREATOR,
+    WRONG_A_GENERTOR,
+    REGENERATOR_1,
+    MAP_SUM,
+    COMBINE_SUM,
+    QUESTIONS_GEN,
+    ANSWER_FINDER,
+    U1_WRONG_ANSWERS
+)
+from document_loaders import text_splitter, pre_processing, smallar_chunks_creator, docx_loader
 import ast
-from fastapi import HTTPException
 
 
 def regenerator(chunk, first_output):
@@ -178,4 +185,70 @@ def summary(document, facts_num):
 
     return res['text']
 
+
+def smaller_qa(document):
+    # Получаем контент документа
+    document_content = pre_processing(document)
+    # Делим на чанки
+    chunks = smallar_chunks_creator(document_content)
+    print(chunks)
+
+    token = api_getter()["access_token"]
+    print(f'Новый токен:\n{token}')
+    llm = GigaChat(access_token=token, verify_ssl_certs=False)
+
+    # Придумываем вопросы по тексту
+    questions_gen = QUESTIONS_GEN
+    questions_gen_prompt = PromptTemplate.from_template(questions_gen)
+    questions_gen_chain = LLMChain(llm=llm, prompt=questions_gen_prompt)
+
+    # Находим ответ на вопрос
+    answer_finder = ANSWER_FINDER
+    answer_finder_prompt = PromptTemplate.from_template(answer_finder)
+    answer_finder_chain = LLMChain(llm=llm, prompt=answer_finder_prompt)
+
+    # Генерим неверные ответы на каждый вопрос
+    wrong_answers = U1_WRONG_ANSWERS
+    wrong_answers_prompt = PromptTemplate.from_template(wrong_answers)
+    wrong_answers_chain = LLMChain(llm=llm, prompt=wrong_answers_prompt)
+
+    test_list = []
+    for chunk in chunks:
+
+        question = questions_gen_chain.invoke({"chunk": chunk})
+
+        if question['text'].startswith(("Не люблю менять тему разговора",
+                                        "Что-то в вашем вопросе меня смущает",
+                                        "Как у нейросетевой языковой модели у меня не может быть настроения")):
+
+            return {"status_code": 401, "Blacklisted chunk": chunk}
+
+        answer = answer_finder_chain.invoke({"chunk": chunk, "question": question["text"]})
+        wrong_answ = wrong_answers_chain.invoke({"chunk": chunk,
+                                                 "question": question["text"],
+                                                 "answer": answer["text"]})
+
+        paragraphs = wrong_answ["text"].split('\n\n')
+        for paragraph in paragraphs:
+            lines = paragraph.split('\n')
+            sublist = []
+            for line in lines:
+                if line.strip().startswith(('1.', '2.', '3.')):
+                    sublist.append(line.split('.', 1)[1].strip())
+
+            if (len(sublist) == 3 and
+                    sublist[0] != sublist[1] and
+                    sublist[1] != sublist[2] and
+                    answer["text"] not in sublist):
+
+                res = {"question": question["text"],
+                       "answer1": answer["text"],
+                       "answer2": sublist[0],
+                       "answer3": sublist[1],
+                       "answer4": sublist[2],
+                       "right": ["answer1"],
+                       "chunk": chunk}
+                test_list.append(res)
+
+    return test_list
 

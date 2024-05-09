@@ -26,6 +26,17 @@ def text_splitter(text):
     return texts
 
 
+def smallar_chunks_creator(text):
+    chunk_splitter = CharacterTextSplitter.from_tiktoken_encoder(
+        separator='. ',
+        encoding_name='cl100k_base',
+        chunk_size=500,
+        chunk_overlap=0
+    )
+    texts = chunk_splitter.split_text(text)
+    return texts
+
+
 def pre_processing(data):
     stroke = data[0].page_content.replace('\n', ' ')
     new_stroke = stroke.replace('  ', ' ')

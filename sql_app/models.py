@@ -10,6 +10,7 @@ class File(Base):
     id = Column(Integer, primary_key=True)
     filename = Column(String)
     upload_date = Column(DateTime, default=func.now())
+    file_size = Column(Integer)
 
 
 class FileData(Base):
@@ -23,6 +24,8 @@ class FileData(Base):
     test_raw = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    summary_time = Column(Integer, nullable=True)
+    qa_time = Column(Integer, nullable=True)
 
     file = relationship("File", back_populates="data")
 
