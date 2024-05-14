@@ -118,9 +118,8 @@ def qa_generator(document):
         qa_chain = LLMChain(llm=llm, prompt=qa_creator_prompt)
         answers = qa_chain.invoke({"chunk": chunk})
         if answers['text'].startswith(("Не люблю менять тему разговора",
-                                        "Что-то в вашем вопросе меня смущает",
-                                        "Как у нейросетевой языковой модели у меня не может быть настроения")):
-
+                                       "Что-то в вашем вопросе меня смущает",
+                                       "Как у нейросетевой языковой модели у меня не может быть настроения")):
             return {"status_code": 401, "Blacklisted chunk": chunk}
 
         print(f"\nВходной чанк:\n{answers['chunk']}\nОтвет llm:\n{answers['text']}\n")
@@ -172,7 +171,6 @@ def summary(document, facts_num):
         if sum_part['text'].startswith(("Не люблю менять тему разговора",
                                         "Что-то в вашем вопросе меня смущает",
                                         "Как у нейросетевой языковой модели у меня не может быть настроения")):
-
             return {"status_code": 401, "Blacklisted chunk": chunk}
 
         map_sums_chunks += f"{sum_part['text']}\n\n"
@@ -220,7 +218,6 @@ def smaller_qa(document):
         if question['text'].startswith(("Не люблю менять тему разговора",
                                         "Что-то в вашем вопросе меня смущает",
                                         "Как у нейросетевой языковой модели у меня не может быть настроения")):
-
             return {"status_code": 401, "Blacklisted chunk": chunk}
 
         answer = answer_finder_chain.invoke({"chunk": chunk, "question": question["text"]})
@@ -232,23 +229,37 @@ def smaller_qa(document):
         for paragraph in paragraphs:
             lines = paragraph.split('\n')
             sublist = []
+            has_numbers = False
             for line in lines:
                 if line.strip().startswith(('1.', '2.', '3.')):
+                    has_numbers = True
                     sublist.append(line.split('.', 1)[1].strip())
 
-            if (len(sublist) == 3 and
-                    sublist[0] != sublist[1] and
-                    sublist[1] != sublist[2] and
-                    answer["text"] not in sublist):
-
-                res = {"question": question["text"],
-                       "answer1": answer["text"],
-                       "answer2": sublist[0],
-                       "answer3": sublist[1],
-                       "answer4": sublist[2],
-                       "right": ["answer1"],
-                       "chunk": chunk}
-                test_list.append(res)
+            if has_numbers:
+                if (len(sublist) == 3 and
+                        sublist[0] != sublist[1] and
+                        sublist[1] != sublist[2] and
+                        answer["text"] not in sublist):
+                    res = {"question": question["text"],
+                           "answer1": answer["text"],
+                           "answer2": sublist[0],
+                           "answer3": sublist[1],
+                           "answer4": sublist[2],
+                           "right": ["answer1"],
+                           "chunk": chunk}
+                    test_list.append(res)
+            else:
+                if (len(lines) == 3 and
+                        lines[0] != lines[1] and
+                        lines[1] != lines[2] and
+                        answer["text"] not in lines):
+                    res = {"question": question["text"],
+                           "answer1": answer["text"],
+                           "answer2": lines[0],
+                           "answer3": lines[1],
+                           "answer4": lines[2],
+                           "right": ["answer1"],
+                           "chunk": chunk}
+                    test_list.append(res)
 
     return test_list
-
