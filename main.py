@@ -171,7 +171,7 @@ def get_file(file_id: int, db: Session = Depends(get_db)):
     if db_file_data is None:
         raise HTTPException(status_code=404, detail="File data not found")
     test = db.query(models.FileData.test).filter(models.FileData.file_id == file_id).first()
-    json_test = json.loads(test[0])
+    json_test = json.loads(test[0]) if (test and test[0]) else ""
     title = nltk.sent_tokenize(db_file_data.content)
     proc_time = (db_file_data.summary_time or 0) + (db_file_data.qa_time or 0)
 

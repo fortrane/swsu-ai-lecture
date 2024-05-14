@@ -71,7 +71,7 @@ rm -Rfv swsu-ai-lecture/
 Activate venv (not for now):
 
 ```bash
-. venv/bin/activate
+. source venv/bin/activate
 ```
 
 Install requirements:
