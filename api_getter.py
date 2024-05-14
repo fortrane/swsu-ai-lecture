@@ -1,18 +1,20 @@
 import requests
 import json
 import uuid
+from dotenv import load_dotenv
+import os
 
 
 def api_getter():
 
-    url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+    url = os.environ.get('ENV_GIGACHAT_URL') 
 
     payload = 'scope=GIGACHAT_API_PERS'
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
         'RqUID': str(uuid.uuid4()),
-        'Authorization': 'Basic TOKEN_HERE'
+        'Authorization': 'Basic '+ os.environ.get('ENV_GIGACHAT_TOKEN'),
     }
 
     response = requests.request("POST", url, headers=headers, data=payload, verify=False)
