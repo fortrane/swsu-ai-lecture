@@ -80,15 +80,11 @@ Install requirements:
 pip install -r requirements.txt
 ```
 
-Add Auth token for Gigachat:
+Add URL and Auth token for Gigachat in .env:
 
 ```bash
-vim api_getter.py
-Click "i"
-Go to TOKEN_HERE, delete it
-Press "Shift+Insert"
-Press "Esc"
-Write ":wq"
+ENV_GIGACHAT_URL = https://ngw.devices.sberbank.ru:9443/api/v2/oauth
+ENV_GIGACHAT_TOKEN = ZDlmNDAxYmYtZ.......hlMQ==
 ```
 
 Install pm2:
@@ -139,6 +135,12 @@ Restart nginx service:
 
 ```bash
 sudo service nginx restart
+```
+
+Start project manually:
+
+```bash
+hypercorn main:app --bind 0.0.0.0:8000
 ```
 
 **Go to your ip and, ohhh, god bless, all working!!**
