@@ -122,7 +122,7 @@ def process_summary(file_data_id: int, db: Session = Depends(get_db)):
     summary_text = summary(file_path)
     end_time = time.time()
     execution_time = end_time - start_time
-    print(execution_time)
+    # print(execution_time)
     if isinstance(summary_text, dict) and summary_text.get("status_code") == 401:
         raise HTTPException(status_code=401, detail="Blacklisted chunk: " + str(summary_text.get("Blacklisted chunk")))
 
@@ -186,7 +186,7 @@ def get_file(file_id: int, db: Session = Depends(get_db)):
         "created_at": db_file.upload_date,
         "title": title[0] if title else "",
         "text": db_file_data.content if db_file_data.content else "",
-        "summary": db_file_data.summary if 'summary' in json_test else "",
+        "summary": db_file_data.summary if  db_file_data.summary else "",
         "test": json_test
     }
 
