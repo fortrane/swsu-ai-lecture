@@ -161,7 +161,10 @@ def process_qa(file_data_id: int, db: Session = Depends(get_db)):
 
 @app.get("/file/{file_id}")
 def get_file(file_id: int, db: Session = Depends(get_db)):
-    nltk.download('punkt')
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt')
 
     db_file = db.query(models.File).filter(models.File.id == file_id).first()
     if db_file is None:
