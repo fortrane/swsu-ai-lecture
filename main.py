@@ -131,7 +131,6 @@ def process_summary(file_data_id: int, db: Session = Depends(get_db)):
     db_file_data.summary_time = int(execution_time)
     db.commit()
 
-
 @app.post("/process-qa/{file_data_id}")
 def process_qa(file_data_id: int, db: Session = Depends(get_db)):
     # Повторяем те же шаги, что и в эндпоинте для summary
