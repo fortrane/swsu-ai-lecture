@@ -26,6 +26,7 @@ def get_db():
 
 
 def summary(file_name, facts_num=10):
+    print("def summary")    
     if file_name.split('.')[1] == 'pdf':
         return "Временно недоступно загружать документы формата PDF."
     elif file_name.split('.')[1] == 'docx':
@@ -35,6 +36,7 @@ def summary(file_name, facts_num=10):
 
 
 def qa(file_name):
+    print("def qa")  
     if file_name.split('.')[1] == 'pdf':
         return "Временно недоступно загружать документы формата PDF."
     elif file_name.split('.')[1] in ['docx', 'doc']:
@@ -109,12 +111,13 @@ def process_summary(file_data_id: int, db: Session = Depends(get_db)):
     db_file_data = db.query(models.FileData).filter(models.FileData.id == file_data_id).first()
     if not db_file_data:
         raise HTTPException(status_code=404, detail="FileData not found")
-
+    print("1")
     # Находим связанный файл, чтобы получить его имя и путь
     db_file = db.query(models.File).filter(models.File.id == db_file_data.file_id).first()
     if not db_file:
         raise HTTPException(status_code=404, detail="File not found")
 
+    print("2")
     file_path = os.path.join(os.getcwd(), "temp", db_file.filename)
 
     # Вызываем функцию summary, передавая путь файла
@@ -122,10 +125,12 @@ def process_summary(file_data_id: int, db: Session = Depends(get_db)):
     summary_text = summary(file_path)
     end_time = time.time()
     execution_time = end_time - start_time
+    print("3")
     # print(execution_time)
     if isinstance(summary_text, dict) and summary_text.get("status_code") == 401:
         raise HTTPException(status_code=401, detail="Blacklisted chunk: " + str(summary_text.get("Blacklisted chunk")))
 
+    print("4")
     # Обновляем запись в базе данных с результатом summary
     db_file_data.summary = summary_text
     db_file_data.summary_time = int(execution_time)
