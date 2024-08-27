@@ -98,6 +98,12 @@ Start gunicorn:
 pm2 start "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app" --name swsu_ai_api
 ```
 
+Start unicorn:
+```bash
+(venv) root@campus:/var/www/swsu-ai-lecture 
+  pm2 start "uvicorn main:app --host 0.0.0.0 --port 55556" -n "ai"
+```
+
 Make cUrl request:
 ```bash
 curl localhost:8000

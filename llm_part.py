@@ -18,7 +18,7 @@ import ast
 
 def regenerator(chunk, first_output):
     token = api_getter()["access_token"]
-    # print(f'\nНовый токен для регенирации:\n{token}')
+    print(f'\nНовый токен для регенерации:\n{token}')
 
     llm = GigaChat(access_token=token, verify_ssl_certs=False)
     regen_template = REGENERATOR_1
@@ -26,7 +26,7 @@ def regenerator(chunk, first_output):
 
     regen_chain = LLMChain(llm=llm, prompt=regen_prompt)
     res = regen_chain.invoke({"chunk": chunk, "question": first_output})
-    # print(f"\nПосле регена:\n{res['text']}")
+    print(f"\nПосле регена:\n{res['text']}")
 
     return res['text']
 
@@ -107,7 +107,7 @@ def qa_generator(document):
     chunks = text_splitter(document_content)
 
     token = api_getter()["access_token"]
-    # print(f'Новый токен:\n{token}')
+    print(f'Новый токен:\n{token}')
     llm = GigaChat(access_token=token, verify_ssl_certs=False)
 
     qa_creator_template = QA_CREATOR
@@ -122,11 +122,11 @@ def qa_generator(document):
                                        "Как у нейросетевой языковой модели у меня не может быть настроения")):
             return {"status_code": 401, "Blacklisted chunk": chunk}
 
-        # print(f"\nВходной чанк:\n{answers['chunk']}\nОтвет llm:\n{answers['text']}\n")
+        print(f"\nВходной чанк:\n{answers['chunk']}\nОтвет llm:\n{answers['text']}\n")
 
         qa_sets.extend(string_to_sets(answers['text'], chunk))
 
-    # print(f"Отформатированное множество:\n{qa_sets}\n")
+    print(f"Отформатированное множество:\n{qa_sets}\n")
     wrong_answers_template = WRONG_A_GENERTOR
     wrong_answers_prompt = PromptTemplate.from_template(wrong_answers_template)
 
@@ -137,13 +137,13 @@ def qa_generator(document):
         q = qa[0]
         a = qa[1]
         variant = worng_a_chain.invoke({"question": q, "answer": a})
-        # print(f"Входной вопрос:\n{variant['question']}\nОтвет: {variant['answer']}\nОтвет llm:\n{variant['text']}\n")
+        print(f"Входной вопрос:\n{variant['question']}\nОтвет: {variant['answer']}\nОтвет llm:\n{variant['text']}\n")
         wa = string_to_sets_wa(variant['text'])
         wa_sets.append(wa)
-    # print(f"Множество ответов:\n{wa_sets}\n\n")
+    print(f"Множество ответов:\n{wa_sets}\n\n")
 
     validated_test = wa_validation(qa_sets, wa_sets)
-    # print(validated_test)
+    print(validated_test)
     return str(validated_test)
 
 
@@ -155,7 +155,7 @@ def summary(document, facts_num):
     # print(chunks)
 
     token = api_getter()["access_token"]
-    # print(f'Новый токен:\n{token}')
+    print(f'Новый токен:\n{token}')
     llm = GigaChat(access_token=token, verify_ssl_certs=False)
 
     map_sum = MAP_SUM
@@ -165,9 +165,9 @@ def summary(document, facts_num):
     # Результат по чанкам
     map_sums_chunks = ""
     for chunk in chunks:
-        # print("INPUT CHUNK:", chunk)
+        print("INPUT CHUNK:", chunk)
         sum_part = map_chain.invoke({"chunk": chunk})
-        # print("OUTPUT RES:", sum_part)
+        print("OUTPUT RES:", sum_part)
         if sum_part['text'].startswith(("Не люблю менять тему разговора",
                                         "Что-то в вашем вопросе меня смущает",
                                         "Как у нейросетевой языковой модели у меня не может быть настроения")):
@@ -175,7 +175,7 @@ def summary(document, facts_num):
 
         map_sums_chunks += f"{sum_part['text']}\n\n"
 
-    # print(map_sums_chunks)
+    print(map_sums_chunks)
     combine_sum = COMBINE_SUM
     combime_sum_prompt = PromptTemplate.from_template(combine_sum)
     combine_chain = LLMChain(llm=llm, prompt=combime_sum_prompt)
@@ -189,10 +189,10 @@ def smaller_qa(document):
     document_content = pre_processing(document)
     # Делим на чанки
     chunks = smallar_chunks_creator(document_content)
-    # print(chunks)
+    print(chunks)
 
     token = api_getter()["access_token"]
-    # print(f'Новый токен:\n{token}')
+    print(f'Новый токен:\n{token}')
     llm = GigaChat(access_token=token, verify_ssl_certs=False)
 
     # Придумываем вопросы по тексту
