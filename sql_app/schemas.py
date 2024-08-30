@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class FileBase(BaseModel):
     filename: str
@@ -43,9 +43,26 @@ class FileData(FileDataBase):
         orm_mode = True
 
 
+class TestSchema(BaseModel):
+    question: str
+    answer1: str
+    answer2: str
+    answer3: str
+    answer4: str
+    right: List[str]
+    chunk: str
+
+
 class FileResponse(BaseModel):
-    filename: str
-    id: int
+    file_id: int
+    file_name: str
+    file_size: int
+    text_length: int
+    summary_length: int
+    questions_count: int
+    proc_time: int
+    created_at: str
+    test: List[TestSchema]
 
 
 class FileInfo(BaseModel):

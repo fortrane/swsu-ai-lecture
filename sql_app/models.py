@@ -4,6 +4,13 @@ from sqlalchemy.sql import func
 from .database import Base
 
 
+class Logger(Base):
+    __tablename__ = "loggers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    telegram_id = Column(Integer, unique=True, index=True)
+
+
 class File(Base):
     __tablename__ = "files"
 
