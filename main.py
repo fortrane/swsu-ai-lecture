@@ -17,6 +17,7 @@ from db import get_db
 from sqlalchemy.orm import Session
 from sql_app.database import SessionLocal
 import pytz
+from typing import List
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -24,9 +25,7 @@ models.Base.metadata.create_all(bind=engine)
 def get_listeners_ids():
     db: Session = SessionLocal()
     try:
-        # Выполняем запрос к базе данных для получения всех значений telegram_id
         listeners = db.query(models.Logger.telegram_id).all()
-        # Преобразуем список кортежей в множество
         return {listener[0] for listener in listeners}
     finally:
         db.close()
@@ -50,7 +49,6 @@ def qa(file_name):
         return 'Файл неправильно назван(name.pdf) или имеет не верный формат pdf/docx'
 
 
-# starting web application
 app = FastAPI()
 origins = [
     "*",
@@ -64,7 +62,7 @@ app.add_middleware(
 )
 
 
-@app.post("/upload-file", response_model=schemas.FileResponse)
+@app.post("/upload-file", response_model=schemas.UploadResponse)
 def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
         # file_name = utility_part.generate_random_filename(file.filename)
@@ -108,6 +106,34 @@ def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
         file.file.close()
 
     return {"filename": file_name, "id": db_file.id}
+
+
+@app.post("/process-qa/{file_data_id}")
+def process_qa(file_data_id: int, db: Session = Depends(get_db)):
+    # Повторяем те же шаги, что и в эндпоинте для summary
+    db_file_data = db.query(models.FileData).filter(models.FileData.id == file_data_id).first()
+    if not db_file_data:
+        raise HTTPException(status_code=404, detail="FileData not found")
+
+    db_file = db.query(models.File).filter(models.File.id == db_file_data.file_id).first()
+    if not db_file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_path = os.path.join(os.getcwd(), "temp", db_file.filename)
+
+    # Вызываем функцию qa, передавая путь файла
+    start_time = time.time()
+    qa_text = qa(file_path)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    qa_text_json = json.dumps(qa_text, ensure_ascii=False, indent=None)
+    if isinstance(qa_text, dict) and qa_text.get("status_code") == 401:
+        raise HTTPException(status_code=401, detail="Blacklisted chunk: " + str(qa_text.get("Blacklisted chunk")))
+
+    # Обновляем запись в базе данных с результатом qa
+    db_file_data.test = qa_text_json
+    db_file_data.qa_time = int(execution_time)
+    db.commit()
 
 
 @app.post("/process-summary/{file_data_id}")
@@ -320,3 +346,13 @@ def delete_file(file_id: int, db: Session = Depends(get_db)):
     db.delete(db_file)
     db.commit()
     return {"message": "File and associated data deleted"}
+
+
+@app.get("/files", response_model=List[schemas.FileListResponse])
+def get_all_files(db: Session = Depends(get_db)):
+    try:
+        files = db.query(models.File).all()
+        files_list = [{"file_id": file.id, "created_at": file.upload_date} for file in files]
+        return files_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
