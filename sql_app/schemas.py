@@ -2,6 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional, List
 
+
 class FileBase(BaseModel):
     filename: str
 
@@ -13,6 +14,14 @@ class FileCreate(FileBase):
 class File(FileBase):
     id: int
     upload_date: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class FileListResponse(BaseModel):
+    file_id: int
+    created_at: datetime
 
     class Config:
         orm_mode = True
@@ -63,6 +72,11 @@ class FileResponse(BaseModel):
     proc_time: int
     created_at: str
     test: List[TestSchema]
+
+
+class UploadResponse(BaseModel):
+    filename: str
+    id: int
 
 
 class FileInfo(BaseModel):
