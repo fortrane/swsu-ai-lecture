@@ -19,6 +19,7 @@ from sql_app.database import SessionLocal
 import pytz
 from typing import List
 
+nltk.download('punkt')
 models.Base.metadata.create_all(bind=engine)
 
 
