@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from sql_app.database import SessionLocal
 import pytz
 from typing import List
+import hashlib
 
 nltk.download('punkt')
 models.Base.metadata.create_all(bind=engine)
@@ -169,10 +170,29 @@ def process_summary(file_data_id: int, db: Session = Depends(get_db)):
 @app.post("/upload-and-process-file", response_model=schemas.FileResponse)
 async def upload_and_process_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
-        # Чтение содержимого файла асинхронно
+
+        contents = await file.read()
+        file_hash = hashlib.md5(contents).hexdigest()  # Вычисляем хеш-сумму файла
+
+        # Проверка, есть ли уже запись с таким хешем
+        existing_file = db.query(models.File).filter_by(file_hash=file_hash).first()
+        if existing_file:
+            # Если файл уже был обработан, возвращаем данные из БД
+            db_file_data = db.query(models.FileData).filter_by(file_id=existing_file.id).first()
+            return {
+                "file_id": existing_file.id,
+                "file_name": existing_file.filename,
+                "file_size": existing_file.file_size,
+                "text_length": len(db_file_data.content) if db_file_data.content else 0,
+                "summary_length": len(db_file_data.summary) if db_file_data.summary else 0,
+                "questions_count": len(json.loads(db_file_data.test)) if db_file_data.test else 0,
+                "proc_time": (db_file_data.summary_time or 0) + (db_file_data.qa_time or 0),
+                "created_at": existing_file.upload_date.isoformat(),
+                "test": json.loads(db_file_data.test) if db_file_data.test else ""
+            }
+
         file_name = file.filename
         file_path = os.path.join(os.getcwd(), "temp", file_name)
-        contents = await file.read()
 
         # Сохранение файла
         with open(file_path, 'wb') as f:
@@ -190,7 +210,10 @@ async def upload_and_process_file(file: UploadFile = File(...), db: Session = De
             raise HTTPException(status_code=400, detail="Unsupported file format")
 
         # Создание записи в базе данных
-        db_file = models.File(filename=file_name, upload_date=datetime.utcnow(), file_size=file_size)
+        db_file = models.File(filename=file_name,
+                              file_hash=file_hash,
+                              upload_date=datetime.utcnow(),
+                              file_size=file_size)
         db.add(db_file)
         db.commit()
         db.refresh(db_file)
