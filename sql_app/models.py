@@ -16,6 +16,7 @@ class File(Base):
 
     id = Column(Integer, primary_key=True)
     filename = Column(String)
+    file_hash = Column(String(64), nullable=False, unique=True)
     upload_date = Column(DateTime, default=func.now())
     file_size = Column(Integer)
 
